@@ -1,1 +1,5 @@
-
+python-telegram-bot==20.0
+requests
+facebook-sdk
+tweepy
+git+https://github.com/d6e/vkontakte.git @main  # Для ВКонтакте
