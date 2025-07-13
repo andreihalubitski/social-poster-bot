@@ -1,1 +1,45 @@
+import os
+from telegram import Update
+from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
+from instagram import publish_to_instagram
+from vk import publish_to_vk
+from twitter import publish_to_twitter
+from facebook import publish_to_facebook
 
+TELEGRAM_TOKEN = os.getenv("7614367092:AAFKKMr_7E4HMEAPDb_PxXPFxUiN5LxK59U
+")
+
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("Привет! Отправь мне текст и фото для поста.")
+
+async def post_all(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    text = update.message.caption if update.message.caption else update.message.text
+    photo_file = None
+
+    if update.message.photo:
+        photo = update.message.photo[-1]
+        photo_file = await photo.get_file()
+        await photo_file.download_to_drive("post.jpg")
+        photo_path = "post.jpg"
+    else:
+        photo_path = None
+
+    await update.message.reply_text("Публикую пост...")
+
+    try:
+        publish_to_instagram(text, photo_path)
+        publish_to_vk(text, photo_path)
+        publish_to_twitter(text, photo_path)
+        publish_to_facebook(text, photo_path)
+        await update.message.reply_text("✅ Пост опубликован во всех сетях!")
+    except Exception as e:
+        await update.message.reply_text(f"❌ Ошибка: {str(e)}")
+
+if __name__ == '__main__':
+    app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
+
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(CommandHandler("post", post_all))  # Используй /post [текст] + фото
+
+    print("Бот запущен...")
+    app.run_polling()
